@@ -12,6 +12,8 @@ def load_data(uploaded_file):
 def main():
     st.title("Sorteio Aleatório de Nomes")
     st.write("Faça o upload de um arquivo Excel contendo a lista de nomes.")
+    st.write("I M P O R T A N T E - O arquivo deve conter uma coluna chamada Nome.")
+
     
     uploaded_file = st.file_uploader("Envie um arquivo Excel (.xlsx)", type=["xlsx"])
     
