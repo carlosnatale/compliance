@@ -2,28 +2,34 @@ import streamlit as st
 import pandas as pd
 import random
 
-# Carregar o dataset
-def load_data():
-    file_path = "gamecompliance.xlsx"  # O arquivo deve estar na mesma pasta do app
-    xls = pd.ExcelFile(file_path)
-    df = pd.read_excel(xls, sheet_name="db")
-    return df
+# Função para carregar o dataset a partir do upload do usuário
+def load_data(uploaded_file):
+    if uploaded_file is not None:
+        df = pd.read_excel(uploaded_file)
+        return df
+    return None
 
 def main():
     st.title("Sorteio Aleatório de Nomes")
-    st.write("Defina a quantidade de sorteados e clique no botão para realizar o sorteio.")
+    st.write("Faça o upload de um arquivo Excel contendo a lista de nomes.")
     
-    df = load_data()
-    nomes = df["Nome"].tolist()
+    uploaded_file = st.file_uploader("Envie um arquivo Excel (.xlsx)", type=["xlsx"])
     
-    # Selecionar a quantidade de sorteados
-    qtd_sorteados = st.number_input("Quantidade de sorteados:", min_value=1, max_value=len(nomes), value=1)
-    
-    if st.button("Sortear"):
-        sorteados = random.sample(nomes, qtd_sorteados)
-        st.success("Nomes sorteados:")
-        for nome in sorteados:
-            st.write(f"- {nome}")
+    if uploaded_file is not None:
+        df = load_data(uploaded_file)
+        if df is not None and "Nome" in df.columns:
+            nomes = df["Nome"].dropna().tolist()
+            
+            # Selecionar a quantidade de sorteados
+            qtd_sorteados = st.number_input("Quantidade de sorteados:", min_value=1, max_value=len(nomes), value=1)
+            
+            if st.button("Sortear"):
+                sorteados = random.sample(nomes, qtd_sorteados)
+                st.success("Nomes sorteados:")
+                for nome in sorteados:
+                    st.write(f"- {nome}")
+        else:
+            st.error("O arquivo enviado não contém uma coluna chamada 'Nome'.")
 
 if __name__ == "__main__":
     main()
