@@ -1,37 +1,47 @@
+
 import streamlit as st
 import pandas as pd
 import random
 
-# Função para carregar o dataset a partir do upload do usuário
-def load_data(uploaded_file):
-    if uploaded_file is not None:
-        df = pd.read_excel(uploaded_file)
-        return df
+# -------------------------------
+# Funções utilitárias
+# -------------------------------
+
+def normalize_header(col_name: str) -> str:
+    """Normaliza o nome da coluna removendo espaços e deixando minúsculo."""
+    if not isinstance(col_name, str):
+        return ""
+    return col_name.strip().lower()
+
+def find_name_column(df: pd.DataFrame):
+    """
+    Encontra a coluna cujo cabeçalho é 'Nome' ou 'Name'
+    (case-insensitive, ignorando espaços).
+    Retorna o nome exato da coluna no DataFrame ou None se não encontrado.
+    """
+    target_headers = {"nome", "name"}
+    normalized_map = {col: normalize_header(col) for col in df.columns}
+    for original_col, norm_col in normalized_map.items():
+        if norm_col in target_headers:
+            return original_col
     return None
 
-def main():
-    st.title("Sorteio Aleatório de Nomes")
-    st.write("Faça o upload de um arquivo Excel contendo a lista de nomes.")
-    st.write("I M P O R T A N T E - O arquivo deve conter uma coluna chamada Nome.")
+def load_data(uploaded_file):
+    """
+    Carrega Excel (.xlsx ou .xls).
+    - Usa header=0 para que a primeira linha do Excel seja tratada como cabeçalho.
+    - Assim, os dados do DataFrame correspondem a partir da linha 2 do Excel.
+    """
+    if uploaded_file is None:
+        return None
 
-    
-    uploaded_file = st.file_uploader("Envie um arquivo Excel (.xlsx)", type=["xlsx"])
-    
-    if uploaded_file is not None:
-        df = load_data(uploaded_file)
-        if df is not None and "Nome" in df.columns:
-            nomes = df["Nome"].dropna().tolist()
-            
-            # Selecionar a quantidade de sorteados
-            qtd_sorteados = st.number_input("Quantidade de sorteados:", min_value=1, max_value=len(nomes), value=1)
-            
-            if st.button("Sortear"):
-                sorteados = random.sample(nomes, qtd_sorteados)
-                st.success("Nomes sorteados:")
-                for nome in sorteados:
-                    st.write(f"- {nome}")
+    # Tenta ambos engines conforme extensão
+    name = uploaded_file.name.lower()
+    try:
+        if name.endswith(".xlsx"):
+            df = pd.read_excel(uploaded_file, engine="openpyxl")
+        elif name.endswith(".xls"):
+            df = pd.read_excel(uploaded_file, engine="xlrd")
         else:
-            st.error("O arquivo enviado não contém uma coluna chamada 'Nome'.")
-
-if __name__ == "__main__":
-    main()
+            st.error("Formato não suportado. Envie um arquivo .xlsx ou .xls.")
+            return None
